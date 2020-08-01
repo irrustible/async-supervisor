@@ -1,0 +1,12 @@
+[package]
+name = "async-supervisors"
+version = "0.1.0"
+authors = ["James Laver <james.laver@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+async-backplane = "0.1"
+# async-backplane = { path = "../async-backplane" }
+futures-lite = "0.1"
+# simple-rate-limit = { path = "../simple-rate-limit" }
+simple-rate-limit = { git = "https://github.com/irrustible/simple-rate-limit", branch = "main" }
