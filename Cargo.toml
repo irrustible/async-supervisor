@@ -1,12 +1,15 @@
 [package]
-name = "async-supervisors"
+name = "async-supervisor"
 version = "0.1.0"
 authors = ["James Laver <james.laver@gmail.com>"]
 edition = "2018"
 
 [dependencies]
-async-backplane = "0.1"
-# async-backplane = { path = "../async-backplane" }
-futures-lite = "0.1"
+# async-backplane = "0.1"
+async-backplane = { path = "../async-backplane" }
+async-io = "0.1.*"
+futures-lite = "0.1.*"
+futures-micro = { path = "../futures-micro" }
+# futures-micro = { git = "https://github.com/irrustible/futures-micro", branch = "main" }
 # simple-rate-limit = { path = "../simple-rate-limit" }
 simple-rate-limit = { git = "https://github.com/irrustible/simple-rate-limit", branch = "main" }
