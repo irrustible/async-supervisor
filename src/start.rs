@@ -20,15 +20,15 @@ pub enum StartError {
 /// component is a boxed function ([`Init`]), 
 pub struct Start {
     pub fun: StartFn,
-    /// The period of time
-    pub grace: Grace,
+    /// How much of a hurry we are in to get onto starting the next task.
+    pub haste: Haste,
 }
 
 impl Start {
 
     /// Creates a new [`Start`] from a [`Fn`] closure.
     pub fn new(fun: StartFn) -> Self {
-        Start { fun, grace: Grace::Fixed(Duration::from_secs(5)) }
+        Start { fun, haste: Haste::Gracefully(Grace::Fixed(Duration::from_secs(5))) }
     }
 
     /// Sets the inner function to the provided value.
@@ -38,23 +38,24 @@ impl Start {
     }
 
     /// Sets the grace period to the provided value.
-    pub fn set_grace(mut self, grace: Grace) -> Self {
-        self.grace = grace;
+    pub fn set_haste(mut self, haste: Haste) -> Self {
+        self.haste = haste;
         self
     }
 
     /// Starts a process, giving it the appropriate grace period to start up
     pub async fn start(&self, device: Device) -> Result<Started, StartError> {
-        match self.grace {
-            Grace::Forever =>
+        match self.haste {
+            Haste::Gracefully(Grace::Forever) =>
                 (self.fun)(device).await.map_err(StartError::Fault),
-            Grace::Fixed(duration) =>
+            Haste::Gracefully(Grace::Fixed(duration)) =>
                 async {
                     (self.fun)(device).await.map_err(StartError::Fault)
                 }.or(async {
                     Timer::new(duration).await;
                     Err(StartError::Timeout)
-                }).await
+                }).await,
+            Haste::Quickly => unimplemented!(),
         }
     }
 

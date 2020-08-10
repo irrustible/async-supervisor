@@ -14,7 +14,8 @@ brand new, not yet finished and currently without tests .
 
 Currently unimplemented (contributions welcome!):
 
-* Shutdown grace periods
+* Startup with `Haste::Quickly` - panics.
+* Shutdown without `Haste::Quickly` - accepted but ignored.
 * The entire test suite, lol.
 
 ## Guide
@@ -194,7 +195,7 @@ the `set_grace` method. Most of the options are on the `Spec` though:
 pub struct Spec {
     pub start: Start,
     pub restart: Restart,
-    pub shutdown: Shutdown,
+    pub shutdown: Haste,
 }
 ```
 
@@ -213,13 +214,13 @@ pub enum Restart {
 }
 ```
 
-`Shutdown` describes how we behave in the event we need to shut down
-the task. We can either wait for it for some grace period or we can
-just assume it succeeded and carry on:
+`Haste` describes how much time we give a task to start up or shut
+down.We can either wait for it for some (potentially infinite) grace
+period or we can just assume it succeeded and carry on:
 
 ```rust
 /// How should a task be restarted?
-pub enum Shutdown {
+pub enum Haste {
     /// We will wait for it to end before we continue.
     Gracefully(Grace),
     /// We will assume it to have disconnected and continue our work.
