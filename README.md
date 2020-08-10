@@ -83,6 +83,10 @@ two phases because supervisors have the option to perform an orderly
 startup, where we wait for each task to start up before going on to
 start the next task.
 
+In the event that during startup, one of the tasks fails to start, the
+supervisor will shut down with a success status. Its supervisor will
+then restart it only if it is configured to `Always` restart it.
+
 Now come some rather wordy types that are actually quite simple:
 
 ```rust
