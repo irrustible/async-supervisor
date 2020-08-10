@@ -111,7 +111,7 @@ returning a `Future`. The type of this function would be this, if we
 could write it this way:
 
 ```rust
-Fn(Device) -> impl Future<Output=Result<Started, Fault>>
+Fn(Device) -> impl Future<Output=Result<Started, Fault>> + Unpin
 ```
 
 So ours is just the version of that with the added boxes. The future
