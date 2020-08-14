@@ -22,4 +22,5 @@ simple-rate-limit = { git = "https://github.com/irrustible/simple-rate-limit", b
 # rle-bitset = "0.1"
 # rle-bitset = { path = "../rle-bitset" }
 # futures-many = "0.1"
-futures-many = { path = "../futures-many" }
+futures-many = { git = "https://github.com/irrustible/futures-many", branch = "main" }
+# futures-many = { path = "../futures-many" }
