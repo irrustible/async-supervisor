@@ -10,12 +10,11 @@ Erlang-style Supervisors for
 ## Status: alpha
 
 It's built on battle tested principles, but the implementation is
-brand new, not yet finished and currently without tests .
+brand new and currently without tests.
 
 Currently unimplemented (contributions welcome!):
 
 * Startup with `Haste::Quickly` - panics.
-* Shutdown without `Haste::Quickly` - accepted but ignored.
 * The entire test suite, lol.
 
 ## Guide
