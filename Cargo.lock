@@ -3,11 +3,12 @@
 [[package]]
 name = "async-backplane"
 version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a9a516d4104b6588c490dc3a656b889eb5583652c16928d6bc2e546a61b6cc2d"
 dependencies = [
  "atomic-waker",
  "concurrent-queue",
  "futures-lite",
- "futures-micro 0.1.0 (git+https://github.com/irrustible/futures-micro?branch=main)",
  "maybe-unwind",
  "pin-project-lite",
  "waker-queue",
@@ -38,7 +39,8 @@ dependencies = [
  "async-backplane",
  "async-io",
  "futures-lite",
- "futures-micro 0.1.0",
+ "futures-many",
+ "futures-micro 0.2.0",
  "simple-rate-limit",
 ]
 
@@ -109,19 +111,26 @@ dependencies = [
 ]
 
 [[package]]
-name = "futures-micro"
+name = "futures-many"
 version = "0.1.0"
-source = "git+https://github.com/irrustible/futures-micro?branch=main#823e00a794fc2b92341bc3eaa92783d0bf315f12"
 dependencies = [
- "pin-project-lite",
+ "futures-core",
+ "futures-micro 0.1.1",
+ "primitive_traits 0.2.0",
+ "rle-bitset",
 ]
 
 [[package]]
 name = "futures-micro"
-version = "0.1.0"
-dependencies = [
- "pin-project-lite",
-]
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b0d27020fc0454d45a757519a2684457718a60242a89383545d9b0f64f6b6111"
+
+[[package]]
+name = "futures-micro"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "765775ce35a7751af578419776aca3235658be6d89849c178c1b556d6db7aa54"
 
 [[package]]
 name = "libc"
@@ -163,6 +172,18 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "282adbf10f2698a7a77f8e983a74b2d18176c19a7fd32a45446139ae7b02b715"
 
 [[package]]
+name = "primitive_traits"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8f04c8d9cad48dd24ba746a3a9e0aa7dc80199eecf78e5d930917eb23d29023d"
+
+[[package]]
+name = "primitive_traits"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ff1fce8f7e64aa6d866737c60f38b47dfc5863303bf7e2f68748db118d820eb3"
+
+[[package]]
 name = "redox_syscall"
 version = "0.1.57"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -172,6 +193,13 @@ checksum = "41cc0f7e4d5d4544e8861606a285bb08d3e70712ccc7d2b84d7c0ccfaf4b05ce"
 name = "ring-vec"
 version = "0.1.0"
 source = "git+https://github.com/irrustible/ring-vec?branch=main#74379581dd5bebcfb2b89ff83265e6225fe61791"
+
+[[package]]
+name = "rle-bitset"
+version = "0.1.0"
+dependencies = [
+ "primitive_traits 0.1.0",
+]
 
 [[package]]
 name = "simple-rate-limit"

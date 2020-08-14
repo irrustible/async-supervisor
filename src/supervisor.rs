@@ -2,7 +2,9 @@
 //! others to restart.
 use crate::*;
 use async_backplane::prelude::*;
-use futures_lite::StreamExt;
+use async_io::Timer;
+use futures_lite::*;
+use futures_many::Many;
 use simple_rate_limit::{RateLimit, RateLimiter};
 
 /// A one-for-one Supervisor
@@ -168,21 +170,92 @@ impl Supervisor {
     }
 
     async fn shut_down(&mut self, device: &mut Device, start_index: usize) {
-        // TODO - we need to poll the Device to check when they've
-        // exited, respect all of the shutdown periods
-        let id = device.device_id();
+        let mut waiting: Vec<Option<DeviceID>> = Vec::new();
+        let mut timers = Many::new();
+        self.start_shut_down(device.device_id(), start_index, &mut waiting, &mut timers).await;
+        let mut needed = waiting.len();
+        while needed > 0 {
+            match self.next_shutdown_message(device, &mut timers).await {
+                ShuttingDown::Remove(id) => {
+                    for x in waiting.iter_mut() {
+                        if let Some(y) = x {
+                            if *y == id {
+                                *x = None;
+                                needed -= 1;
+                            }
+                        }
+                    }
+                    // not found, ignore
+                }
+                ShuttingDown::DoneWaiting => { break; }
+                ShuttingDown::Done => { return; }
+            }
+        }
+        while needed > 0 {
+            if let Some(message) = device.next().await {
+                if let Message::Disconnected(id, _) = message {
+                    for x in waiting.iter_mut() {
+                        if let Some(y) = x {
+                            if *y == id {
+                                *x = None;
+                                needed -= 1;
+                            }
+                        }
+                    }
+                } //ignore shutdown requests
+            } else { return; } // Well the Device things there are no more left, what to do? unreachable?
+        }
+    }
+
+    async fn start_shut_down(
+        &mut self,
+        my_id: DeviceID,
+        start_index: usize,
+        waiting: &mut Vec<Option<DeviceID>>,
+        timers: &mut Many<future::Boxed<DeviceID>>
+    ) {
         for (i, state) in self.states.drain(start_index..).enumerate().rev() {
-            // let index = i + start_index;
+            let index = i + start_index;
             if let Some(line) = state {
-                line.send(Shutdown(id));
-                // match self.specs[index].shutdown {
-                //     Haste::Quickly => { line.send(Shutdown(id)); }
-                //     Haste::Gracefully(Grace::Forever) => {}
-                //     Haste::Gracefully(Grace::Fixed) => {}
-                // }
+                let id = line.device_id();
+                #[allow(unused_must_use)]
+                match self.specs[index].shutdown {
+                    Haste::Quickly => { line.send(Shutdown(my_id)); }
+                    Haste::Gracefully(Grace::Forever) => {
+                        waiting.push(Some(line.device_id()));
+                        line.send(Shutdown(my_id));
+                    }
+                    Haste::Gracefully(Grace::Fixed(when)) => {
+                        waiting.push(Some(line.device_id()));
+                        timers.push(timer(when, id).boxed());
+                        line.send(Shutdown(my_id));
+                    }
+                }
             }
         }
     }
 
+    async fn next_shutdown_message(&mut self, device: &mut Device, timers: &mut Many<future::Boxed<DeviceID>>) -> ShuttingDown {
+        loop {
+            let ret = async { Ok(device.next().await) }.or(async { Err(timers.next().await) }).await;
+            match ret {
+                Ok(Some(Message::Disconnected(id,_))) => { return ShuttingDown::Remove(id); }
+                Err(Some(id)) => { return ShuttingDown::Remove(id); }
+                Ok(None) => { return ShuttingDown::Done; }
+                Err(None) => { return ShuttingDown::DoneWaiting; }
+                _ => (), // ignore, carry on
+            }
+        }
+    }
 }
 
+enum ShuttingDown {
+    Remove(DeviceID),
+    DoneWaiting,
+    Done,
+}
+
+async fn timer(when: Duration, id: DeviceID) -> DeviceID {
+    Timer::new(when).await;
+    id
+}

@@ -1,15 +1,25 @@
 [package]
 name = "async-supervisor"
 version = "0.1.0"
+description = "Simple erlang-style supervision for rust+async-backplane."
+keywords = ["supervisor", "supervision", "erlang", "reliability", "backplane"]
+categories = ["asynchronous", "concurrency"]
+homepage = "https://github.com/irrustible/async-supervisor"
+repository = "https://github.com/irrustible/async-supervisor"
+documentation = "https://docs.rs/async-supervisor"
+license = "MPL-2.0"
 authors = ["James Laver <james.laver@gmail.com>"]
 edition = "2018"
+readme = "README.md"
 
 [dependencies]
-# async-backplane = "0.1"
-async-backplane = { path = "../async-backplane" }
+async-backplane = "0.1"
 async-io = "0.1.*"
 futures-lite = "0.1.*"
-futures-micro = { path = "../futures-micro" }
-# futures-micro = { git = "https://github.com/irrustible/futures-micro", branch = "main" }
-# simple-rate-limit = { path = "../simple-rate-limit" }
+futures-micro = "0.2"
 simple-rate-limit = { git = "https://github.com/irrustible/simple-rate-limit", branch = "main" }
+# simple-rate-limit = { path = "../simple-rate-limit" }
+# rle-bitset = "0.1"
+# rle-bitset = { path = "../rle-bitset" }
+# futures-many = "0.1"
+futures-many = { path = "../futures-many" }
