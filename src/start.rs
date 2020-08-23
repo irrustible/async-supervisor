@@ -7,7 +7,7 @@ use async_io::Timer;
 pub type StartFn = Box<dyn Fn(Device) -> Starting>;
 
 /// Type of the boxed Future returned by [`StartFn`].
-pub type Starting = Box<dyn Future<Output=Result<Started, Fault>> + Unpin>;
+pub type Starting = Box<dyn Future<Output = Result<Started, Fault>> + Unpin>;
 
 pub enum StartError {
     /// The task failed on its own terms.
@@ -17,7 +17,7 @@ pub enum StartError {
 }
 
 /// Describes how a supervisor should start a task. The major
-/// component is a boxed function ([`Init`]), 
+/// component is a boxed function ([`Init`]),
 pub struct Start {
     pub fun: StartFn,
     /// How much of a hurry we are in to get onto starting the next task.
@@ -25,10 +25,12 @@ pub struct Start {
 }
 
 impl Start {
-
     /// Creates a new [`Start`] from a [`Fn`] closure.
     pub fn new(fun: StartFn) -> Self {
-        Start { fun, haste: Haste::Gracefully(Grace::Fixed(Duration::from_secs(5))) }
+        Start {
+            fun,
+            haste: Haste::Gracefully(Grace::Fixed(Duration::from_secs(5))),
+        }
     }
 
     /// Sets the inner function to the provided value.
@@ -46,17 +48,18 @@ impl Start {
     /// Starts a process, giving it the appropriate grace period to start up
     pub async fn start(&self, device: Device) -> Result<Started, StartError> {
         match self.haste {
-            Haste::Gracefully(Grace::Forever) =>
-                (self.fun)(device).await.map_err(StartError::Fault),
-            Haste::Gracefully(Grace::Fixed(duration)) =>
-                async {
-                    (self.fun)(device).await.map_err(StartError::Fault)
-                }.or(async {
-                    Timer::new(duration).await;
-                    Err(StartError::Timeout)
-                }).await,
+            Haste::Gracefully(Grace::Forever) => {
+                (self.fun)(device).await.map_err(StartError::Fault)
+            }
+            Haste::Gracefully(Grace::Fixed(duration)) => {
+                async { (self.fun)(device).await.map_err(StartError::Fault) }
+                    .or(async {
+                        Timer::new(duration).await;
+                        Err(StartError::Timeout)
+                    })
+                    .await
+            }
             Haste::Quickly => unimplemented!(),
         }
     }
-
 }

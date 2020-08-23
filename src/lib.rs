@@ -1,4 +1,3 @@
-
 mod start;
 pub use start::{Start, StartError, StartFn, Starting};
 
@@ -97,7 +96,6 @@ impl Spec {
         self.shutdown = shutdown;
         self
     }
-
 }
 
 /// The Supervisor failed - why?
