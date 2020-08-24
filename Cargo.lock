@@ -40,7 +40,7 @@ dependencies = [
  "async-io",
  "futures-lite",
  "futures-many",
- "futures-micro 0.2.0",
+ "futures-micro",
  "simple-rate-limit",
 ]
 
@@ -113,18 +113,13 @@ dependencies = [
 [[package]]
 name = "futures-many"
 version = "0.1.0"
+source = "git+https://github.com/irrustible/futures-many?branch=main#540c986c0c6b0447ba5337a253f41b9a55dc7820"
 dependencies = [
  "futures-core",
- "futures-micro 0.1.1",
+ "futures-micro",
  "primitive_traits 0.2.0",
  "rle-bitset",
 ]
-
-[[package]]
-name = "futures-micro"
-version = "0.1.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b0d27020fc0454d45a757519a2684457718a60242a89383545d9b0f64f6b6111"
 
 [[package]]
 name = "futures-micro"
@@ -197,6 +192,8 @@ source = "git+https://github.com/irrustible/ring-vec?branch=main#74379581dd5bebc
 [[package]]
 name = "rle-bitset"
 version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2e1a58810d7d14aa63589fb56bb35dea4f571357d9f8855a15daba781865b195"
 dependencies = [
  "primitive_traits 0.1.0",
 ]

@@ -16,7 +16,6 @@ pub struct Supervisor {
 }
 
 impl Supervisor {
-
     pub fn new(logic: RecoveryLogic) -> Supervisor {
         Supervisor {
             logic,
@@ -35,10 +34,7 @@ impl Supervisor {
         self.specs.push(spec);
     }
 
-    pub async fn supervise(
-        mut self,
-        mut device: Device,
-    ) -> Result<(), Crash<SupervisionError>> {
+    pub async fn supervise(mut self, mut device: Device) -> Result<(), Crash<SupervisionError>> {
         if let Err(crash) = self.start_up(&mut device, 0).await {
             self.shut_down(&mut device, 0).await;
             device.disconnect(None);
@@ -48,29 +44,36 @@ impl Supervisor {
         }
     }
 
-    async fn start_up( 
+    async fn start_up(
         &mut self,
         device: &mut Device,
-        start_index: usize
+        start_index: usize,
     ) -> Result<(), Crash<SupervisionError>> {
         for index in start_index..self.specs.len() {
             match self.start_link(device, index).await {
-                Ok(line) => { self.states.push(line); }
-                Err(error) => { return Err(error); }
+                Ok(line) => {
+                    self.states.push(line);
+                }
+                Err(error) => {
+                    return Err(error);
+                }
             }
         }
-        return Ok(());
+        Ok(())
     }
 
     async fn start_link(
         &mut self,
         device: &mut Device,
-        index: usize
+        index: usize,
     ) -> Result<Option<Line>, Crash<SupervisionError>> {
         let d = Device::new();
         device.link(&d, LinkMode::Monitor);
         let line = d.line();
-        self.specs[index].start.start(d).await
+        self.specs[index]
+            .start
+            .start(d)
+            .await
             .map_err(|e| Crash::Error(SupervisionError::StartupFailed(index, e)))
             .map(|s| match s {
                 Started::Completed => None,
@@ -78,10 +81,7 @@ impl Supervisor {
             })
     }
 
-    async fn watch(
-        &mut self,
-        device: Device
-    ) -> Result<(), Crash<SupervisionError>> {
+    async fn watch(&mut self, device: Device) -> Result<(), Crash<SupervisionError>> {
         let mut limiter = RateLimiter::new(self.restart_rate);
         let mut device = device;
         while let Some(message) = device.next().await {
@@ -91,8 +91,12 @@ impl Supervisor {
                     return Err(Crash::PowerOff(id));
                 }
                 Disconnected(id, result) => {
-                    let ret = self.disconnected(&mut device, id, result, &mut limiter).await;
-                    if let Err(crash) = ret { return Err(crash); }
+                    let ret = self
+                        .disconnected(&mut device, id, result, &mut limiter)
+                        .await;
+                    if let Err(crash) = ret {
+                        return Err(crash);
+                    }
                 }
             }
         }
@@ -104,7 +108,7 @@ impl Supervisor {
         device: &mut Device,
         id: DeviceID,
         result: Option<Fault>,
-        limiter: &mut RateLimiter
+        limiter: &mut RateLimiter,
     ) -> Result<(), Crash<SupervisionError>> {
         for index in 0..self.states.len() {
             let state = &self.states[index];
@@ -122,15 +126,18 @@ impl Supervisor {
         device: &mut Device,
         index: usize,
         result: Option<Fault>,
-        limiter: &mut RateLimiter
+        limiter: &mut RateLimiter,
     ) -> Result<(), Crash<SupervisionError>> {
         self.states[index].take().unwrap();
         match self.specs[index].restart {
             Restart::Never => Ok(()),
             Restart::Always => self.restart(device, index, limiter).await,
             Restart::Failed => {
-                if result.is_some() { self.restart(device, index, limiter).await }
-                else { Ok(()) }
+                if result.is_some() {
+                    self.restart(device, index, limiter).await
+                } else {
+                    Ok(())
+                }
             }
         }
     }
@@ -139,22 +146,20 @@ impl Supervisor {
         &mut self,
         device: &mut Device,
         index: usize,
-        limiter: &mut RateLimiter
+        limiter: &mut RateLimiter,
     ) -> Result<(), Crash<SupervisionError>> {
         if limiter.check() {
             match self.logic {
-                RecoveryLogic::Isolated => {
-                    match self.start_link(device, index).await {
-                        Ok(line) => {
-                            self.states[index] = line;
-                            Ok(())
-                        }
-                        Err(crash) => {
-                            self.shut_down(device, 0).await;
-                            Err(crash)
-                        }
+                RecoveryLogic::Isolated => match self.start_link(device, index).await {
+                    Ok(line) => {
+                        self.states[index] = line;
+                        Ok(())
                     }
-                }
+                    Err(crash) => {
+                        self.shut_down(device, 0).await;
+                        Err(crash)
+                    }
+                },
                 RecoveryLogic::CascadeNewer => {
                     self.shut_down(device, index + 1).await;
                     self.start_up(device, index).await
@@ -172,7 +177,8 @@ impl Supervisor {
     async fn shut_down(&mut self, device: &mut Device, start_index: usize) {
         let mut waiting: Vec<Option<DeviceID>> = Vec::new();
         let mut timers = Many::new();
-        self.start_shut_down(device.device_id(), start_index, &mut waiting, &mut timers).await;
+        self.start_shut_down(device.device_id(), start_index, &mut waiting, &mut timers)
+            .await;
         let mut needed = waiting.len();
         while needed > 0 {
             match self.next_shutdown_message(device, &mut timers).await {
@@ -187,8 +193,12 @@ impl Supervisor {
                     }
                     // not found, ignore
                 }
-                ShuttingDown::DoneWaiting => { break; }
-                ShuttingDown::Done => { return; }
+                ShuttingDown::DoneWaiting => {
+                    break;
+                }
+                ShuttingDown::Done => {
+                    return;
+                }
             }
         }
         while needed > 0 {
@@ -203,7 +213,9 @@ impl Supervisor {
                         }
                     }
                 } //ignore shutdown requests
-            } else { return; } // Well the Device things there are no more left, what to do? unreachable?
+            } else {
+                return;
+            } // Well the Device things there are no more left, what to do? unreachable?
         }
     }
 
@@ -212,7 +224,7 @@ impl Supervisor {
         my_id: DeviceID,
         start_index: usize,
         waiting: &mut Vec<Option<DeviceID>>,
-        timers: &mut Many<future::Boxed<DeviceID>>
+        timers: &mut Many<future::Boxed<DeviceID>>,
     ) {
         for (i, state) in self.states.drain(start_index..).enumerate().rev() {
             let index = i + start_index;
@@ -220,7 +232,9 @@ impl Supervisor {
                 let id = line.device_id();
                 #[allow(unused_must_use)]
                 match self.specs[index].shutdown {
-                    Haste::Quickly => { line.send(Shutdown(my_id)); }
+                    Haste::Quickly => {
+                        line.send(Shutdown(my_id));
+                    }
                     Haste::Gracefully(Grace::Forever) => {
                         waiting.push(Some(line.device_id()));
                         line.send(Shutdown(my_id));
@@ -235,14 +249,28 @@ impl Supervisor {
         }
     }
 
-    async fn next_shutdown_message(&mut self, device: &mut Device, timers: &mut Many<future::Boxed<DeviceID>>) -> ShuttingDown {
+    async fn next_shutdown_message(
+        &mut self,
+        device: &mut Device,
+        timers: &mut Many<future::Boxed<DeviceID>>,
+    ) -> ShuttingDown {
         loop {
-            let ret = async { Ok(device.next().await) }.or(async { Err(timers.next().await) }).await;
+            let ret = async { Ok(device.next().await) }
+                .or(async { Err(timers.next().await) })
+                .await;
             match ret {
-                Ok(Some(Message::Disconnected(id,_))) => { return ShuttingDown::Remove(id); }
-                Err(Some(id)) => { return ShuttingDown::Remove(id); }
-                Ok(None) => { return ShuttingDown::Done; }
-                Err(None) => { return ShuttingDown::DoneWaiting; }
+                Ok(Some(Message::Disconnected(id, _))) => {
+                    return ShuttingDown::Remove(id);
+                }
+                Err(Some(id)) => {
+                    return ShuttingDown::Remove(id);
+                }
+                Ok(None) => {
+                    return ShuttingDown::Done;
+                }
+                Err(None) => {
+                    return ShuttingDown::DoneWaiting;
+                }
                 _ => (), // ignore, carry on
             }
         }
